@@ -1,1 +1,49 @@
-// место для вашего кода
+#pragma once
+
+#include <deque>
+#include <optional>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+#include "geo.h"
+
+namespace transport {
+
+struct Stop {
+    std::string name;
+    geo::Coordinates coordinates;
+};
+
+struct Route {
+    std::string name;
+    std::vector<std::string> stops;
+};
+
+struct RouteInfo {
+    size_t number_of_stops;
+    size_t number_of_unique_stops;
+    double length;
+};
+
+class TransportCatalogue {
+public:
+    void AddStop(const std::string& stop_name, const geo::Coordinates& stop_coorditanes);    
+    void AddRoute(const std::string& route_name, const std::vector<std::string>& route_stops);   
+    const Stop& GetStop(const std::string& stop_name) const;
+    const Route& GetRoute(const std::string& route_name) const;
+    RouteInfo GetRouteInfo(const std::string& route_name) const; 
+    std::optional<std::set<std::string_view>> GetRoutesThroughStop(const std::string& stop_name) const;
+     
+private:
+    double СalculateRouteLength(const std::vector<std::string> stops) const;
+    
+    std::deque<Stop> stops_;
+    std::deque<Route> routes_;
+    std::unordered_map<std::string_view, const Stop*> stop_info_by_stop_name_;
+    std::unordered_map<std::string_view, const Route*> route_info_by_route_name_;
+    std::unordered_map<std::string_view, std::set<std::string_view>> routes_through_stop_by_stop_name_;
+};
+    
+}
