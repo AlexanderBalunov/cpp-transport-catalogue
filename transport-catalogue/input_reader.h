@@ -8,6 +8,8 @@
 #include "transport_catalogue.h"
 
 namespace transport {
+    
+namespace detail {       
 
 struct CommandDescription {
     explicit operator bool() const {
@@ -22,6 +24,8 @@ struct CommandDescription {
     std::string id;           // id маршрута или остановки
     std::string description;  // Параметры команды
 };
+    
+}
 
 class InputReader {
 public:
@@ -29,7 +33,7 @@ public:
     void ApplyCommands(TransportCatalogue& catalogue) const;
 
 private:
-    std::vector<CommandDescription> commands_;
+    std::vector<detail::CommandDescription> commands_;
 };
 
 }
