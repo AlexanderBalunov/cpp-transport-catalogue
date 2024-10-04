@@ -96,22 +96,22 @@ void InputReader::ParseLine(std::string_view line) {
 }
 
 void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue& catalogue) const {
-    for (const CommandDescription& command_description : commands_) {
-        if (!command_description) {
-            continue;
-        }
+    for (const detail::CommandDescription& command_description : commands_) {
         if (command_description.command == "Stop") {
             catalogue.AddStop(command_description.id, detail::ParseCoordinates(command_description.description));
-        } else if (command_description.command == "Bus") {
+        } else if (command_description.command != "Bus") {
+            throw std::invalid_argument("Unknown request in the InputReader class.");
+        }
+    }
+    for (const detail::CommandDescription& command_description : commands_) {
+        if (command_description.command == "Bus") {
             std::vector<std::string> stops;
             for (auto stop : detail::ParseRoute(command_description.description)) {
                 stops.push_back(std::string(stop));
             }
             catalogue.AddRoute(command_description.id, stops);
-        } else {
-            throw std::invalid_argument("Unknown request in the InputReader class.");
-        }
-    }
+        }    
+    }   
 }
     
 }
