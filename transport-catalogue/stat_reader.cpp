@@ -22,14 +22,16 @@ void ParseAndPrintStat(const TransportCatalogue& tansport_catalogue, std::string
                                               << result.number_of_unique_stops << " unique stops, "
                                               << std::setprecision(6) << result.length << " route length" << std::endl;
     } else if (command_name == "Stop") {
-        const auto result = tansport_catalogue.GetRoutesThroughStop(std::string(id_name));
-        if (!result) {
+        if (tansport_catalogue.GetStop(std::string(id_name)) == nullptr) {
             output << "Stop " << id_name << ": not found" << std::endl;
-        } else if (result->empty()) {
+            return;
+        }
+        const auto routes = tansport_catalogue.GetRoutesThroughStop(std::string(id_name));
+        if (routes.empty()) {
             output << "Stop " << id_name << ": no buses" << std::endl;
         } else {
             output << "Stop " << id_name << ": buses";
-            for (const std::string_view& stop : *result) {
+            for (const std::string_view& stop : std::set(routes.begin(), routes.end())) {
                 output << " " << stop;
             }
             output << std::endl;
