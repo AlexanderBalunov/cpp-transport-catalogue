@@ -30,9 +30,9 @@ class TransportCatalogue {
 public:
     void AddStop(const std::string& stop_name, const geo::Coordinates& stop_coorditanes);    
     void AddRoute(const std::string& route_name, const std::vector<std::string>& route_stops);   
-    const Stop* GetStop(const std::string_view& stop_name) const;
-    const Route* GetRoute(const std::string_view& route_name) const;
-    RouteInfo GetRouteInfo(const std::string_view& route_name) const; 
+    const Stop* GetStop(std::string_view stop_name) const;
+    const Route* GetRoute(std::string_view route_name) const;
+    RouteInfo GetRouteInfo(std::string_view route_name) const; 
     std::unordered_set<std::string_view> GetRoutesThroughStop(const std::string& stop_name) const;
      
 private:
