@@ -18,21 +18,21 @@ void TransportCatalogue::AddRoute(const std::string& route_name, const std::vect
     }    
 }
 
-const Stop* TransportCatalogue::GetStop(const std::string_view& stop_name) const {
+const Stop* TransportCatalogue::GetStop(std::string_view stop_name) const {
     if (!stop_info_by_stop_name_.count(stop_name)) {
         return nullptr;
     }
     return stop_info_by_stop_name_.at(stop_name);
 }
 
-const Route* TransportCatalogue::GetRoute(const std::string_view& route_name) const {
+const Route* TransportCatalogue::GetRoute(std::string_view route_name) const {
     if (!route_info_by_route_name_.count(route_name)) {
         return nullptr;
     }
     return route_info_by_route_name_.at(route_name);
 }
 
-RouteInfo TransportCatalogue::GetRouteInfo(const std::string_view& route_name) const {
+RouteInfo TransportCatalogue::GetRouteInfo(std::string_view route_name) const {
     if (!route_info_by_route_name_.count(route_name)) {
         return {0, 0, 0.0};
     }
@@ -41,7 +41,7 @@ RouteInfo TransportCatalogue::GetRouteInfo(const std::string_view& route_name) c
            CalculateRouteLength(*route_info_by_route_name_.at(route_name))};
 }
 
-std::unordered_set<std::string_view> TransportCatalogue::GetRoutesThroughStop(const std::string& stop_name) const {
+std::unordered_set<std::string_view> TransportCatalogue::GetRoutesThroughStop(std::string_view stop_name) const {
     if (!routes_through_stop_by_stop_name_.count(stop_name)) {
         return {};
     }
