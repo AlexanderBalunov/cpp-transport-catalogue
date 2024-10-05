@@ -33,7 +33,7 @@ public:
     const Stop* GetStop(std::string_view stop_name) const;
     const Route* GetRoute(std::string_view route_name) const;
     RouteInfo GetRouteInfo(std::string_view route_name) const; 
-    std::unordered_set<std::string_view> GetRoutesThroughStop(const std::string& stop_name) const;
+    std::unordered_set<std::string_view> GetRoutesThroughStop(std::string_view stop_name) const;
      
 private:
     double CalculateRouteLength(const Route& route) const;
