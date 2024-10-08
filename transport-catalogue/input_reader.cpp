@@ -4,6 +4,8 @@
 #include <cassert>
 #include <stdexcept>
 #include <iterator>
+    
+using namespace std::literals;
 
 namespace transport {
 
@@ -64,6 +66,38 @@ std::vector<std::string_view> ParseRoute(std::string_view route) {
 
     return results;
 }
+ 
+struct SeparationFormat {
+    std::string_view coordinates;
+    std::string_view distances;
+};
+
+SeparationFormat Separate(std::string_view description) {
+    auto comma_between_coordinates = description.find(',');    
+    auto comma_after_coordinates = description.find(',', comma_between_coordinates + 1);
+    if (comma_after_coordinates == description.npos) {
+        return {description, ""sv};
+    }
+    return {description.substr(0, comma_after_coordinates),
+            description.substr(comma_after_coordinates + 1)};
+}    
+    
+std::pair<std::string_view, int> ParseDistance(std::string_view distance_info) {
+    return {distance_info.substr(distance_info.find_first_not_of(' ', distance_info.find("to"sv) + 2)), 
+                              std::stoi(std::string(distance_info.substr(0, distance_info.find('m'))))};
+}
+
+std::unordered_map<std::string_view, int> ParseDistances(std::string_view distances) {
+    if (distances.empty()) {
+        return {};
+    }
+    
+    std::unordered_map<std::string_view, int> distances_to_stops;    
+    for (auto distance_info : Split(distances, ',')) {
+        distances_to_stops.insert(ParseDistance(distance_info));
+    }
+    return distances_to_stops;
+}   
 
 CommandDescription ParseCommandDescription(std::string_view line) {
     auto colon_pos = line.find(':');
@@ -98,11 +132,16 @@ void InputReader::ParseLine(std::string_view line) {
 void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue& catalogue) const {
     for (const detail::CommandDescription& command_description : commands_) {
         if (command_description.command == "Stop") {
-            catalogue.AddStop(command_description.id, detail::ParseCoordinates(command_description.description));
+            catalogue.AddStop(command_description.id, detail::ParseCoordinates(detail::Separate(command_description.description).coordinates));
         } else if (command_description.command != "Bus") {
             throw std::invalid_argument("Unknown request in the InputReader class.");
         }
     }
+    for (const detail::CommandDescription& command_description : commands_) {
+        if (command_description.command == "Stop") {
+            catalogue.AddDistance(command_description.id, detail::ParseDistances(detail::Separate(command_description.description).distances));
+        }
+    }    
     for (const detail::CommandDescription& command_description : commands_) {
         if (command_description.command == "Bus") {
             std::vector<std::string> stops;
