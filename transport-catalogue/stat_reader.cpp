@@ -20,7 +20,8 @@ void ParseAndPrintStat(const TransportCatalogue& tansport_catalogue, std::string
         }
         output << "Bus " << id_name << ": " << result.number_of_stops << " stops on route, "
                                               << result.number_of_unique_stops << " unique stops, "
-                                              << std::setprecision(6) << result.length << " route length" << std::endl;
+                                              << result.length << " route length, "
+                                              << std::setprecision(6) << result.curvature << " curvature" << std::endl;
     } else if (command_name == "Stop") {
         if (tansport_catalogue.GetStop(std::string(id_name)) == nullptr) {
             output << "Stop " << id_name << ": not found" << std::endl;
