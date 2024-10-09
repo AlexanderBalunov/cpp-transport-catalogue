@@ -15,17 +15,15 @@ void TransportCatalogue::AddStop(const std::string& stop_name, const geo::Coordi
     routes_through_stop_by_stop_name_[stops_.back().name];
 }
 
-void TransportCatalogue::AddDistance(std::string_view stop_from, const std::unordered_map<std::string_view, int>& distances) {
-    for (auto [stop_to, m] : distances) {
-        distances_between_stops_[{GetStop(stop_from), GetStop(stop_to)}] = m;
-        if (!distances_between_stops_.count({GetStop(stop_to), GetStop(stop_from)})) {
-            distances_between_stops_[{GetStop(stop_to), GetStop(stop_from)}] = m;
-        }
+void TransportCatalogue::AddDistance(std::string_view stop_from, std::string_view stop_to, int distance) {
+    distances_between_stops_[{GetStop(stop_from), GetStop(stop_to)}] = distance;
+    if (!distances_between_stops_.count({GetStop(stop_to), GetStop(stop_from)})) {
+        distances_between_stops_[{GetStop(stop_to), GetStop(stop_from)}] = distance;
     }
 }
     
 int TransportCatalogue::GetDistance(std::string_view stop_from, std::string_view stop_to) const {
-    return distances_between_stops_.at({GetStop(stop_from), GetStop(stop_to)});    
+    return distances_between_stops_.at({GetStop(stop_from), GetStop(stop_to)});
 }
     
 void TransportCatalogue::AddRoute(const std::string& route_name, const std::vector<std::string>& route_stops) {
