@@ -35,7 +35,7 @@ public:
 class TransportCatalogue {
 public:
     void AddStop(const std::string& stop_name, const geo::Coordinates& stop_coorditanes);
-    void AddDistance(std::string_view stop_name, const std::unordered_map<std::string_view, int>& distances);
+    void AddDistance(std::string_view stop_from, std::string_view stop_to, int distance);
     int GetDistance(std::string_view stop_from, std::string_view stop_to) const;
     void AddRoute(const std::string& route_name, const std::vector<std::string>& route_stops);  
     const Stop* GetStop(std::string_view stop_name) const;
