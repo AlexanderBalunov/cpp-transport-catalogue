@@ -139,7 +139,9 @@ void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue& catalogue) 
     }
     for (const detail::CommandDescription& command_description : commands_) {
         if (command_description.command == "Stop") {
-            catalogue.AddDistance(command_description.id, detail::ParseDistances(detail::Separate(command_description.description).distances));
+            for (auto [stop_to, distance] : detail::ParseDistances(detail::Separate(command_description.description).distances)) {
+                catalogue.AddDistance(command_description.id, stop_to, distance);   
+            }
         }
     }    
     for (const detail::CommandDescription& command_description : commands_) {
