@@ -1,23 +1,15 @@
 #pragma once
 
-#include "json_reader.h"
+#include "map_renderer.h"
 #include "transport_catalogue.h"
 
 #include <optional>
 
 class RequestHandler {
 public:
-    RequestHandler(const transport::TransportCatalogue& catalogue, const JsonReader& requests, const MapRenderer& renderer)
-        : catalogue_(catalogue), requests_(requests), renderer_(renderer) {
+    RequestHandler(const transport::TransportCatalogue& catalogue, const MapRenderer& renderer)
+        : catalogue_(catalogue), renderer_(renderer) {
     }
-    
-    json::Dict GetRouteRequestResult(std::string_view bus_name, int request_id) const;
-    
-    json::Dict GetStopRequestResult(std::string_view stop_name, int request_id) const;
-    
-    json::Dict GetMapRequestResult(int request_id) const;
-    
-    void PrintRequestsResults(std::ostream& out) const;
     
     std::optional<transport::TransportCatalogue::RouteInfo> GetBusStat(const std::string_view& bus_name) const;
 
@@ -27,6 +19,5 @@ public:
     
 private:
     const transport::TransportCatalogue& catalogue_;
-    const JsonReader& requests_;
     const MapRenderer& renderer_;
 };
