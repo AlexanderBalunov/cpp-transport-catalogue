@@ -1,4 +1,3 @@
-#include "json.h"
 #include "json_reader.h"
 #include "request_handler.h"
 #include "transport_catalogue.h"
@@ -16,6 +15,7 @@ int main () {
     reader.FillCatalogue(ctlg);
     reader.FillRenderer(renderer);
     
-    RequestHandler handler(ctlg, reader, renderer);
-    handler.PrintRequestsResults(std::cout);
+    RequestHandler handler(ctlg, renderer);
+    
+    reader.PrintRequestsResults(handler, std::cout);
 }
