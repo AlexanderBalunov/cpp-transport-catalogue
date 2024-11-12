@@ -13,9 +13,8 @@ void MapRenderer::SetSettings(RenderSettings settings) {
     settings_ = std::move(settings);
 }
     
-std::vector<svg::Polyline> MapRenderer::MakeAllRoutesLines(const std::map<std::string_view, 
-                                                                 InfoForRenderRoute>& route_render_info_by_route_name) const {
-    std::vector<svg::Polyline> lines_of_all_routes;
+void MapRenderer::AddAllRoutesLines(const std::map<std::string_view, InfoForRenderRoute>& route_render_info_by_route_name, 
+                                          svg::Document& document) const {
     size_t color_index = 0;
     size_t number_of_colors = settings_.color_palette.size();
     for (const auto& [route_name, route_render_info] : route_render_info_by_route_name) {
@@ -34,33 +33,31 @@ std::vector<svg::Polyline> MapRenderer::MakeAllRoutesLines(const std::map<std::s
             if (color_index == number_of_colors) {
                 color_index = 0;
             }
-            lines_of_all_routes.push_back(route_line);
+            document.Add(route_line);
         }           
     }
-    return lines_of_all_routes;
 }
 
-std::vector<svg::Text> MapRenderer::MakeAllRoutesTexts(const std::map<std::string_view, 
-                                                             InfoForRenderRoute>& route_render_info_by_route_name) const {
-    std::vector<svg::Text> texts_of_all_routes;
+void MapRenderer::AddAllRoutesTexts(const std::map<std::string_view, InfoForRenderRoute>& route_render_info_by_route_name,
+                                          svg::Document& document) const {
     size_t color_index = 0;
     size_t number_of_colors = settings_.color_palette.size();
     for (const auto& [route_name, route_render_info] : route_render_info_by_route_name) {
         const auto& stops_coords = route_render_info.coords_of_stops;
-        svg::Text podlozhka_text;
         svg::Text route_name_text;
+        svg::Text text_background;
         if (!route_render_info.coords_of_stops.empty()) {
-            podlozhka_text.SetPosition(stops_coords[0])
-                          .SetOffset(settings_.bus_label_offset)
-                          .SetFontSize(settings_.bus_label_font_size)
-                          .SetFontFamily("Verdana")
-                          .SetFontWeight("bold")
-                          .SetData(std::string(route_name))
-                          .SetFillColor(settings_.underlayer_color)
-                          .SetStrokeColor(settings_.underlayer_color)
-                          .SetStrokeWidth(settings_.underlayer_width)
-                          .SetStrokeLineCap(svg::StrokeLineCap::ROUND)
-                          .SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
+            text_background.SetPosition(stops_coords[0])
+                           .SetOffset(settings_.bus_label_offset)
+                           .SetFontSize(settings_.bus_label_font_size)
+                           .SetFontFamily("Verdana")
+                           .SetFontWeight("bold")
+                           .SetData(std::string(route_name))
+                           .SetFillColor(settings_.underlayer_color)
+                           .SetStrokeColor(settings_.underlayer_color)
+                           .SetStrokeWidth(settings_.underlayer_width)
+                           .SetStrokeLineCap(svg::StrokeLineCap::ROUND)
+                           .SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
                 
             route_name_text.SetPosition(stops_coords[0])
                            .SetOffset(settings_.bus_label_offset)
@@ -74,43 +71,40 @@ std::vector<svg::Text> MapRenderer::MakeAllRoutesTexts(const std::map<std::strin
             if (color_index == number_of_colors) {
                 color_index = 0;
             }
-            texts_of_all_routes.push_back(podlozhka_text);
-            texts_of_all_routes.push_back(route_name_text);
+            document.Add(text_background);
+            document.Add(route_name_text);
             
-            if (stops_coords[0] != stops_coords[stops_coords.size() / 2] && !route_render_info.is_roundtrip) {
-                texts_of_all_routes.push_back(podlozhka_text.SetPosition(stops_coords[stops_coords.size() / 2]));
-                texts_of_all_routes.push_back(route_name_text.SetPosition(stops_coords[stops_coords.size() / 2]));
+            const int index_of_median_stop = stops_coords.size() / 2;
+            if (!route_render_info.is_roundtrip && stops_coords[0] != stops_coords[index_of_median_stop]) {
+                document.Add(text_background.SetPosition(stops_coords[index_of_median_stop]));
+                document.Add(route_name_text.SetPosition(stops_coords[index_of_median_stop]));
             }         
         }      
     }
-    return texts_of_all_routes;
 }
 
-std::vector<svg::Circle> MapRenderer::MakeAllStopsPoints(const std::map<std::string_view, 
-                                                               svg::Point>& coords_of_stop_in_route_by_stop_name) const {
-    std::vector<svg::Circle> stops_points;
+void MapRenderer::AddAllStopsPoints(const std::map<std::string_view, svg::Point>& coords_of_stop_in_route_by_stop_name,
+                                          svg::Document& document) const {
     for (const auto [stop_name, stop_coords] : coords_of_stop_in_route_by_stop_name) {
-        stops_points.push_back(svg::Circle().SetCenter(stop_coords).SetRadius(settings_.stop_radius).SetFillColor("white"));
+        document.Add(svg::Circle().SetCenter(stop_coords).SetRadius(settings_.stop_radius).SetFillColor("white"));
     }
-    return stops_points;
 }
 
-std::vector<svg::Text> MapRenderer::MakeAllStopsTexts(const std::map<std::string_view, 
-                                                            svg::Point>& coords_of_stop_in_route_by_stop_name) const {
-    std::vector<svg::Text> texts_of_all_stops;
+void MapRenderer::AddAllStopsTexts(const std::map<std::string_view, svg::Point>& coords_of_stop_in_route_by_stop_name,
+                                         svg::Document& document) const {
     for (const auto [stop_name, stop_coords] : coords_of_stop_in_route_by_stop_name) {
-        svg::Text podlozhka_text;
         svg::Text stop_name_text;
-        podlozhka_text.SetPosition(stop_coords)
-                      .SetOffset(settings_.stop_label_offset)
-                      .SetFontSize(settings_.stop_label_font_size)
-                      .SetFontFamily("Verdana")
-                      .SetData(std::string(stop_name))
-                      .SetFillColor(settings_.underlayer_color)
-                      .SetStrokeColor(settings_.underlayer_color)
-                      .SetStrokeWidth(settings_.underlayer_width)
-                      .SetStrokeLineCap(svg::StrokeLineCap::ROUND)
-                      .SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
+        svg::Text text_background;
+        text_background.SetPosition(stop_coords)
+                       .SetOffset(settings_.stop_label_offset)
+                       .SetFontSize(settings_.stop_label_font_size)
+                       .SetFontFamily("Verdana")
+                       .SetData(std::string(stop_name))
+                       .SetFillColor(settings_.underlayer_color)
+                       .SetStrokeColor(settings_.underlayer_color)
+                       .SetStrokeWidth(settings_.underlayer_width)
+                       .SetStrokeLineCap(svg::StrokeLineCap::ROUND)
+                       .SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
                 
         stop_name_text.SetPosition(stop_coords)
                       .SetOffset(settings_.stop_label_offset)
@@ -119,10 +113,9 @@ std::vector<svg::Text> MapRenderer::MakeAllStopsTexts(const std::map<std::string
                       .SetData(std::string(stop_name))
                       .SetFillColor("black");
         
-        texts_of_all_stops.push_back(podlozhka_text);
-        texts_of_all_stops.push_back(stop_name_text);
+        document.Add(text_background);
+        document.Add(stop_name_text);
     }
-    return texts_of_all_stops;
 }
 
 svg::Document MapRenderer::MakeSvgDocument(const std::unordered_map<std::string_view, const transport::Stop*>& all_stops,
@@ -169,17 +162,9 @@ svg::Document MapRenderer::MakeSvgDocument(const std::unordered_map<std::string_
     }
             
     svg::Document all_objects;
-    for (const auto& route_line : MapRenderer::MakeAllRoutesLines(route_render_info_by_route_name)) {
-        all_objects.Add(route_line);
-    }
-    for (const auto& route_name_text : MapRenderer::MakeAllRoutesTexts(route_render_info_by_route_name)) {
-        all_objects.Add(route_name_text);
-    }
-    for (const auto& stop_point : MapRenderer::MakeAllStopsPoints(coords_of_stop_in_route_by_stop_name)) {
-        all_objects.Add(stop_point);
-    }
-    for (const auto& stop_name_text : MapRenderer::MakeAllStopsTexts(coords_of_stop_in_route_by_stop_name)) {
-        all_objects.Add(stop_name_text);
-    }    
+    MapRenderer::AddAllRoutesLines(route_render_info_by_route_name, all_objects);
+    MapRenderer::AddAllRoutesTexts(route_render_info_by_route_name, all_objects);
+    MapRenderer::AddAllStopsPoints(coords_of_stop_in_route_by_stop_name, all_objects);
+    MapRenderer::AddAllStopsTexts(coords_of_stop_in_route_by_stop_name, all_objects);
     return all_objects;
 }
