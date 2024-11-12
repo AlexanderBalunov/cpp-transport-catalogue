@@ -250,74 +250,44 @@ Node LoadNode(istream& input) {
 }
 
 }  // namespace
-
-// ----------КОНСТРУКТОРЫ Node----------
- 
-Node::Node(std::nullptr_t value)
-    : value_(value) {
-}
-    
-Node::Node(int value)
-    : value_(value) {
-}
-
-Node::Node(bool value)
-    : value_(value) {
-}    
-
-Node::Node(double value)
-    : value_(value) {
-}        
-    
-Node::Node(string str)
-    : value_(move(str)) {
-}    
-    
-Node::Node(Array array)
-    : value_(move(array)) {
-}
-
-Node::Node(Dict map)
-    : value_(move(map)) {
-}
     
 // ----------ГЕТТЕР для Node----------    
     
 const Node::Value& Node::GetValue() const { 
-    return value_; 
+    return *this;
 }    
 
 // ----------МЕТОДЫ ДЛЯ ПРОВЕРКИ ТИПА ЗНАЧЕНИЯ В Node----------
     
 bool Node::IsInt() const {
-    return holds_alternative<int>(value_);
+    return holds_alternative<int>(*this);
 }
     
 bool Node::IsDouble() const {
-    return IsInt() || holds_alternative<double>(value_);
+    return IsInt() || holds_alternative<double>(*this);
 }
     
 bool Node::IsPureDouble() const {
-    return holds_alternative<double>(value_);
+    return holds_alternative<double>(*this);
 }
     
 bool Node::IsBool() const {
-    return holds_alternative<bool>(value_);
+    return holds_alternative<bool>(*this);
 }
 bool Node::IsString() const {
-    return holds_alternative<string>(value_);
+    return holds_alternative<string>(*this);
 }
     
 bool Node::IsNull() const {
-    return holds_alternative<nullptr_t>(value_);
+    return holds_alternative<nullptr_t>(*this);
 }
     
 bool Node::IsArray() const {
-    return holds_alternative<Array>(value_);
+    return holds_alternative<Array>(*this);
 }
     
 bool Node::IsMap() const {
-    return holds_alternative<Dict>(value_);
+    return holds_alternative<Dict>(*this);
 }
     
 // ----------МЕТОДЫ, ВОЗВРАЩАЮЩИЕ ЗНАЧЕНИЕ, ХРАНЯЩЕЕСЯ В Node----------
@@ -326,21 +296,21 @@ int Node::AsInt() const {
     if (!IsInt()) {
         throw logic_error("No int in std::variant variable"s);
     }
-    return get<int>(value_);
+    return get<int>(*this);
 }
     
 bool Node::AsBool() const {
     if (!IsBool()) {
         throw logic_error("No bool in std::variant variable"s);
     }
-    return get<bool>(value_);    
+    return get<bool>(*this);    
 }    
 
 double Node::AsDouble() const {
     if (IsPureDouble()) {
-        return get<double>(value_);
+        return get<double>(*this);
     } else if (IsInt()) {
-        return get<int>(value_);
+        return get<int>(*this);
     } else {
         throw logic_error("No double/int in std::variant variable"s);
     }   
@@ -350,21 +320,21 @@ const string& Node::AsString() const {
     if (!IsString()) {
         throw logic_error("No string in std::variant variable"s);
     }
-    return get<string>(value_);
+    return get<string>(*this);
 }    
     
 const Array& Node::AsArray() const {
     if (!IsArray()) {
         throw logic_error("No vector in std::variant variable"s);
     }
-    return get<Array>(value_);   
+    return get<Array>(*this);   
 }
 
 const Dict& Node::AsMap() const {
     if (!IsMap()) {
         throw logic_error("No map in std::variant variable"s);
     }
-    return get<Dict>(value_);   
+    return get<Dict>(*this);   
 }
 
 // ----------ОПЕРАТОРЫ == и != ДЛЯ Node И Document----------
