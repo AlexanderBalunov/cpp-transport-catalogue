@@ -96,17 +96,17 @@ class MapRenderer {
 public:
     void SetSettings(RenderSettings settings);
     
-    std::vector<svg::Polyline> MakeAllRoutesLines(const std::map<std::string_view, 
-                                                        InfoForRenderRoute>& route_render_info_by_route_name) const;
+    void AddAllRoutesLines(const std::map<std::string_view, InfoForRenderRoute>& route_render_info_by_route_name, 
+                                 svg::Document& document) const;
     
-    std::vector<svg::Text> MakeAllRoutesTexts(const std::map<std::string_view, 
-                                                    InfoForRenderRoute>& route_render_info_by_route_name) const;
+    void AddAllRoutesTexts(const std::map<std::string_view, InfoForRenderRoute>& route_render_info_by_route_name, 
+                                 svg::Document& document) const;
     
-    std::vector<svg::Circle> MakeAllStopsPoints(const std::map<std::string_view, 
-                                                      svg::Point>& coords_of_stop_in_route_by_stop_name) const;
+    void AddAllStopsPoints(const std::map<std::string_view, svg::Point>& coords_of_stop_in_route_by_stop_name,
+                                 svg::Document& document) const;
     
-    std::vector<svg::Text> MakeAllStopsTexts(const std::map<std::string_view, 
-                                                   svg::Point>& coords_of_stop_in_route_by_stop_name) const;
+    void AddAllStopsTexts(const std::map<std::string_view, svg::Point>& coords_of_stop_in_route_by_stop_name,
+                                svg::Document& document) const;
     
     svg::Document MakeSvgDocument(const std::unordered_map<std::string_view, const transport::Stop*>& all_stops,
                                   const std::unordered_map<std::string_view, const transport::Route*>& all_routes) const;
