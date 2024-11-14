@@ -4,15 +4,17 @@
 
 #include <optional>
 
-namespace json {
-
-class DictItemContext;
-class ArrayItemContext;
-class DictKeyContext;
+namespace json { 
     
-class Builder {
+class Builder { 
+private:
+    class BaseContext;
+    class DictItemContext;
+    class ArrayItemContext;
+    class DictKeyContext;
+    
 public:
-    Builder& Value(Node::Value value);
+    BaseContext Value(Node::Value value);
 
     DictItemContext StartDict();
     
@@ -20,62 +22,103 @@ public:
     
     DictKeyContext Key(std::string str);
     
-    Builder& EndDict();
+    BaseContext EndDict();
     
-    Builder& EndArray();
+    BaseContext EndArray();
     
     Node Build() const;
     
 private:
     Node MakeNodeFromValue(Node::Value value) const;
+    void AddComplexNode(Node::Value value);
     
     Node root_;
     std::vector<Node*> nodes_stack_;
     std::optional<std::string> key_;
     
-    mutable bool object_is_complete_ = false;    
-};    
-    
-class DictItemContext {
-public:
-    DictItemContext(Builder& builder)
-        : builder_(builder) {            
-    }
-    
-    DictKeyContext Key(std::string str);
-    Builder& EndDict();
-    
-private:
-    Builder& builder_;    
-};
+    mutable bool object_is_complete_ = false;      
 
-class ArrayItemContext {
-public:
-    ArrayItemContext(Builder& builder)
-        : builder_(builder) {            
-    }
+    class BaseContext {
+    public:
+        BaseContext(Builder& builder) 
+            : builder_(builder) {
+        }
+        
+        Node Build() {
+            return builder_.Build();
+        }
+        
+        DictKeyContext Key(std::string key) {
+            return builder_.Key(std::move(key));
+        }
+        
+        BaseContext Value(Node::Value value) {
+            return builder_.Value(std::move(value));
+        }
+        
+        DictItemContext StartDict() {
+            return builder_.StartDict();
+        }
+        
+        ArrayItemContext StartArray() {
+            return builder_.StartArray();
+        }
+        
+        BaseContext EndDict() {
+            return builder_.EndDict();
+        }
+        
+        BaseContext EndArray() {
+            return builder_.EndArray();
+        }
+        
+    private:
+        Builder& builder_;
+    };    
+ 
+    class DictItemContext : public BaseContext {
+    public:
+        DictItemContext(BaseContext base)
+            : BaseContext(base) {            
+        }
+        
+        BaseContext Value(Node::Value value) = delete;
+        DictItemContext StartDict() = delete;    
+        ArrayItemContext StartArray() = delete;
+        BaseContext EndArray() = delete;
+        Node Build() = delete;      
+    };    
     
-    ArrayItemContext Value(Node::Value value);
-    DictItemContext StartDict();
-    ArrayItemContext StartArray();
-    Builder& EndArray();
-
-private:
-    Builder& builder_;    
-};
+    class ArrayItemContext : public BaseContext {
+    public:
+        ArrayItemContext(BaseContext base)
+            : BaseContext(base) {            
+        }
+        
+        ArrayItemContext Value(Node::Value value) { 
+            return BaseContext::Value(std::move(value)); 
+        }
+        
+        DictKeyContext Key(std::string str) = delete;
+        Builder& EndDict() = delete;
+        Node Build() = delete;   
+    };
+        
+    class DictKeyContext : public BaseContext {
+    public:    
+        DictKeyContext(BaseContext base)
+            : BaseContext(base) {            
+        }    
     
-class DictKeyContext {
-public:    
-    DictKeyContext(Builder& builder)
-        : builder_(builder) {            
-    }    
-
-    DictItemContext Value(Node::Value value);
-    DictItemContext StartDict(); 
-    ArrayItemContext StartArray();
-    
-private:
-    Builder& builder_;       
-}; 
+        DictItemContext Value(Node::Value value) { 
+            return BaseContext::Value(std::move(value)); 
+        }
+        
+        DictKeyContext Key(std::string str) = delete;    
+        BaseContext EndDict() = delete;    
+        BaseContext EndArray() = delete;
+        Node Build() const = delete;             
+    };
+};      
        
 }
