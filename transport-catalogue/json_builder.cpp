@@ -2,7 +2,7 @@
 
 namespace json {
     
-Builder& Builder::Value(Node::Value value) {
+Builder::BaseContext Builder::Value(Node::Value value) {
     if (object_is_complete_) {
         throw std::logic_error("Calling Value(Node::Value) with the finished object");
     }
@@ -15,82 +15,50 @@ Builder& Builder::Value(Node::Value value) {
     } else {
         Node& last_complex_node = *nodes_stack_.back();
         if (last_complex_node.IsArray()) {
-            last_complex_node.AsArray().emplace_back(MakeNodeFromValue(value));
+            last_complex_node.AsArray().emplace_back(MakeNodeFromValue(std::move(value)));
         }
         if (last_complex_node.IsDict()) {
-            last_complex_node.AsDict().emplace(key_.value(), MakeNodeFromValue(value));
+            last_complex_node.AsDict().emplace(key_.value(), MakeNodeFromValue(std::move(value)));
             key_ = std::nullopt;
         } 
     }
     return *this;
 }
 
-DictItemContext Builder::StartDict() {
+Builder::DictItemContext Builder::StartDict() {
     if (object_is_complete_) {
         throw std::logic_error("Calling StartDict() with the finished object");
     }    
     if (!key_.has_value() && nodes_stack_.size() && !nodes_stack_.back()->IsArray()) {
         throw std::logic_error("Calling StartDict() in wrong place");
     }
-    if (nodes_stack_.empty()) {
-        root_.GetValue() = Dict();
-        nodes_stack_.push_back(&root_);
-    } else {    
-        Node& last_complex_node = *nodes_stack_.back();
-        if (last_complex_node.IsArray()) {
-            Array& last_node_array = last_complex_node.AsArray();
-            last_node_array.emplace_back(MakeNodeFromValue(Dict()));
-            nodes_stack_.push_back(&last_node_array.back());
-        }
-        if (last_complex_node.IsDict()) {
-            Dict& last_node_dict = last_complex_node.AsDict();
-            last_node_dict.emplace(key_.value(), MakeNodeFromValue(Dict()));
-            nodes_stack_.push_back(&last_node_dict.at(key_.value()));
-            key_ = std::nullopt;
-        }        
-    }
-    return *this;
+    AddComplexNode(Dict());
+    return BaseContext{*this};
 }
 
-ArrayItemContext Builder::StartArray() {
+Builder::ArrayItemContext Builder::StartArray() {
     if (object_is_complete_) {
         throw std::logic_error("Calling StartArray() with the finished object");
     }        
     if (!key_.has_value() && nodes_stack_.size() && !nodes_stack_.back()->IsArray()) {
         throw std::logic_error("Calling StartArray() in wrong place");
     }
-    if (nodes_stack_.empty()) {
-        root_.GetValue() = Array();
-        nodes_stack_.push_back(&root_);
-    } else {    
-        Node& last_complex_node = *nodes_stack_.back();
-        if (last_complex_node.IsArray()) {
-            Array& last_node_array = last_complex_node.AsArray();
-            last_node_array.emplace_back(MakeNodeFromValue(Array()));
-            nodes_stack_.push_back(&last_node_array.back());
-        }
-        if (last_complex_node.IsDict()) {
-            Dict& last_node_dict = last_complex_node.AsDict();
-            last_node_dict.emplace(key_.value(), MakeNodeFromValue(Array()));
-            nodes_stack_.push_back(&last_node_dict.at(key_.value()));
-            key_ = std::nullopt;
-        }             
-    }       
-    return *this;
+    AddComplexNode(Array());       
+    return BaseContext{*this};
 }
 
-DictKeyContext Builder::Key(std::string str) {
+Builder::DictKeyContext Builder::Key(std::string str) {
     if (object_is_complete_) {
         throw std::logic_error("Calling Key(std::string) with the finished object");
     }         
     if (!nodes_stack_.back()->IsDict() || key_) {
         throw std::logic_error("Calling Key(std::string) from outside the Dict or after another Key(std::string)");
     }
-    key_ = str;
-    return *this;
+    key_ = std::move(str);
+    return BaseContext{*this};
 }
     
-Builder& Builder::EndDict() {
+Builder::BaseContext Builder::EndDict() {
     if (object_is_complete_) {
         throw std::logic_error("Calling EndDict() with the finished object");
     }     
@@ -104,7 +72,7 @@ Builder& Builder::EndDict() {
     return *this;
 }
     
-Builder& Builder::EndArray() {
+Builder::BaseContext Builder::EndArray() {
     if (object_is_complete_) {
         throw std::logic_error("Calling EndArray() with the finished object");
     }         
@@ -122,7 +90,7 @@ Node Builder::Build() const {
     if (!object_is_complete_) {
         throw std::logic_error("Calling Build() when the described object is not ready");
     }
-    return root_;
+    return std::move(root_);
 }
     
 Node Builder::MakeNodeFromValue(Node::Value value) const {
@@ -136,51 +104,35 @@ Node Builder::MakeNodeFromValue(Node::Value value) const {
         return std::get<bool>(value);
     }
     if (std::holds_alternative<std::string>(value)) {
-        return std::get<std::string>(value);
+        return std::get<std::string>(std::move(value));
     }
     if (std::holds_alternative<Array>(value)) {
-        return std::get<Array>(value);
+        return std::get<Array>(std::move(value));
     }
     if (std::holds_alternative<Dict>(value)) {
-        return std::get<Dict>(value);
+        return std::get<Dict>(std::move(value));
     }
     return {};
+}
+    
+void Builder::AddComplexNode(Node::Value value) {
+    if (nodes_stack_.empty()) {
+        root_.GetValue() = std::move(value);
+        nodes_stack_.push_back(&root_);
+    } else {    
+        Node& last_complex_node = *nodes_stack_.back();
+        if (last_complex_node.IsArray()) {
+            Array& last_node_array = last_complex_node.AsArray();
+            last_node_array.emplace_back(MakeNodeFromValue(std::move(value)));
+            nodes_stack_.push_back(&last_node_array.back());
+        }
+        if (last_complex_node.IsDict()) {
+            Dict& last_node_dict = last_complex_node.AsDict();
+            last_node_dict.emplace(key_.value(), MakeNodeFromValue(std::move(value)));
+            nodes_stack_.push_back(&last_node_dict.at(key_.value()));
+            key_ = std::nullopt;
+        }        
+    }    
 }    
-    
-DictKeyContext DictItemContext::Key(std::string str) {
-    return builder_.Key(str);
-}
-        
-Builder& DictItemContext::EndDict() {
-    return builder_.EndDict();
-}
-    
-ArrayItemContext ArrayItemContext::Value(Node::Value value) {
-    return builder_.Value(value);
-}
-    
-DictItemContext ArrayItemContext::StartDict() {
-    return builder_.StartDict();
-}
-    
-ArrayItemContext ArrayItemContext::StartArray() {
-    return builder_.StartArray();
-}
-    
-Builder& ArrayItemContext::EndArray() {
-    return builder_.EndArray();
-}
-
-DictItemContext DictKeyContext::Value(Node::Value value) {
-    return builder_.Value(value);
-}
-    
-DictItemContext DictKeyContext::StartDict() {
-    return builder_.StartDict();
-}
-    
-ArrayItemContext DictKeyContext::StartArray() {
-    return builder_.StartArray();
-}
     
 }
