@@ -4,12 +4,6 @@
 #include "geo.h"
 
 #include <deque>
-#pragma once
-
-#include "domain.h"
-#include "geo.h"
-
-#include <deque>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
