@@ -17,3 +17,12 @@ const std::unordered_set<std::string_view>* RequestHandler::GetBusesByStop(const
 svg::Document RequestHandler::RenderMap() const {
     return renderer_.MakeSvgDocument(catalogue_.GetAllStops(), catalogue_.GetAllRoutes());
 }
+
+void RequestHandler::UpdateTransportRouterData() const {
+    router_.UploadTransportData(catalogue_);
+}
+
+std::optional<transport::PathInfo> RequestHandler::GetPathBetweenTwoStops(std::string_view stop_from, 
+                                                                          std::string_view stop_to) const {
+    return router_.BuildPath(stop_from, stop_to);
+}
