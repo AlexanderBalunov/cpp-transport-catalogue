@@ -31,6 +31,12 @@ void JsonReader::FillRenderer(MapRenderer& renderer) const {
                           ReadArrayColorFromJson(render_settings_map.at("color_palette"s).AsArray())});
 }
 
+void JsonReader::FillTransportRouter(transport::TransportRouter& transport_router) const {
+    const auto& routing_settings_map = requests_doc_.GetRoot().AsDict().at("routing_settings"s).AsDict();
+    transport_router.SetSettings({routing_settings_map.at("bus_velocity"s).AsDouble(),
+                                  routing_settings_map.at("bus_wait_time"s).AsInt()});
+}
+
 void JsonReader::PrintRequestsResults(const RequestHandler& handler, std::ostream& out) const {
     json::Array result;
     const auto& stat_requests_array = requests_doc_.GetRoot().AsDict().at("stat_requests"s).AsArray();
@@ -46,7 +52,12 @@ void JsonReader::PrintRequestsResults(const RequestHandler& handler, std::ostrea
         }
         if (stat_request_map.at("type"s).AsString() == "Map"s) {
             result.push_back(GetMapRequestResult(stat_request_map.at("id"s).AsInt(), handler));
-        }             
+        }
+        if (stat_request_map.at("type"s).AsString() == "Route"s) {
+            result.push_back(GetPathRequestResult(stat_request_map.at("from"s).AsString(),
+                                                  stat_request_map.at("to"s).AsString(),
+                                                  stat_request_map.at("id"s).AsInt(), handler));
+        }        
     }
     json::Print(json::Document{result}, out);
 }
@@ -172,4 +183,38 @@ json::Node JsonReader::GetMapRequestResult(int request_id, const RequestHandler&
                               .Key("map"s).Value(oss.str())
                           .EndDict()
                           .Build();
+}
+
+json::Node JsonReader::GetPathRequestResult(std::string_view stop_from, std::string_view stop_to, 
+                                            int request_id, const RequestHandler& handler) const {
+    if (!handler.GetPathBetweenTwoStops(stop_from, stop_to)) {
+        return json::Builder{}.StartDict()
+                                  .Key("request_id"s).Value(request_id)
+                                  .Key("error_message"s).Value("not found"s)
+                              .EndDict()
+                              .Build();
+    }
+    const auto path_info = *handler.GetPathBetweenTwoStops(stop_from, stop_to);
+    json::Array items;
+    for (auto& item : path_info.items) {
+        items.emplace_back(json::Builder{}.StartDict()
+                                              .Key("type"s).Value("Wait"s)
+                                              .Key("stop_name"s).Value(std::string(item.start_stop))
+                                              .Key("time"s).Value(path_info.bus_wait_time)
+                                          .EndDict()
+                                          .Build());
+        items.emplace_back(json::Builder{}.StartDict()
+                                              .Key("type"s).Value("Bus"s)
+                                              .Key("bus"s).Value(std::string(item.bus_name))
+                                              .Key("span_count"s).Value(item.span_count)
+                                              .Key("time"s).Value(item.weight)
+                                          .EndDict()
+                                          .Build());        
+    }
+    return json::Builder{}.StartDict()
+                              .Key("request_id"s).Value(request_id)
+                              .Key("total_time"s).Value(path_info.total_time)
+                              .Key("items"s).Value(items)
+                          .EndDict()
+                          .Build();    
 }
