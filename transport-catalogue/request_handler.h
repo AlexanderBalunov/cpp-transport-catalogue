@@ -2,13 +2,14 @@
 
 #include "map_renderer.h"
 #include "transport_catalogue.h"
+#include "transport_router.h"
 
 #include <optional>
 
 class RequestHandler {
 public:
-    RequestHandler(const transport::TransportCatalogue& catalogue, const MapRenderer& renderer)
-        : catalogue_(catalogue), renderer_(renderer) {
+    RequestHandler(const transport::TransportCatalogue& catalogue, const MapRenderer& renderer, const transport::TransportRouter& router)
+        : catalogue_(catalogue), renderer_(renderer), router_(router) {
     }
     
     std::optional<transport::TransportCatalogue::RouteInfo> GetBusStat(const std::string_view& bus_name) const;
@@ -17,7 +18,12 @@ public:
 
     svg::Document RenderMap() const;
     
+    void UpdateTransportRouterData() const;
+    
+    std::optional<transport::PathInfo> GetPathBetweenTwoStops(std::string_view stop_from, std::string_view stop_to) const;
+    
 private:
     const transport::TransportCatalogue& catalogue_;
     const MapRenderer& renderer_;
+    const transport::TransportRouter& router_;
 };
