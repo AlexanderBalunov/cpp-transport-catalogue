@@ -8,7 +8,7 @@
 
 class RequestHandler {
 public:
-    RequestHandler(const transport::TransportCatalogue& catalogue, const MapRenderer& renderer, const transport::TransportRouter& router)
+    RequestHandler(const transport::TransportCatalogue& catalogue, const MapRenderer& renderer, transport::TransportRouter& router)
         : catalogue_(catalogue), renderer_(renderer), router_(router) {
     }
     
@@ -18,12 +18,12 @@ public:
 
     svg::Document RenderMap() const;
     
-    void UpdateTransportRouterData() const;
+    void UpdateTransportRouterData();
     
     std::optional<transport::PathInfo> GetPathBetweenTwoStops(std::string_view stop_from, std::string_view stop_to) const;
     
 private:
     const transport::TransportCatalogue& catalogue_;
     const MapRenderer& renderer_;
-    const transport::TransportRouter& router_;
+    transport::TransportRouter& router_;
 };
