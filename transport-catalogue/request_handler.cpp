@@ -18,7 +18,7 @@ svg::Document RequestHandler::RenderMap() const {
     return renderer_.MakeSvgDocument(catalogue_.GetAllStops(), catalogue_.GetAllRoutes());
 }
 
-void RequestHandler::UpdateTransportRouterData() const {
+void RequestHandler::UpdateTransportRouterData() {
     router_.UploadTransportData(catalogue_);
 }
 
